@@ -53,18 +53,18 @@ func main(){
 	fmt.Println("Howdy")
 
 	//edge size of square for mandelbrot image, and mandelbrot image
-	size := 2000
-	var image [2000][2000] complex
-	step := 5/float64(size)
+	size := 200
+	var image [200][200] complex
+	step := 4.0/float64(size)
 
 	//starting c = 1
-	c := complex{real:0.1,imag:0.0}
+	c := complex{real:-1.2,imag:0.1}
 
 	//number of count iterations for each pixel
 	maxCount := 1000
 
 	//for each space, calculate if sizeof(z**2+c) <= 2, 
-	for x,a := 0,-1.25;x<size;x++{
+	for x,a := 0,-2.0;x<size;x++{
 		for y,b := 0,-2.0;y<size;y++{
 			image[x][y] = complex{real:a,imag:b}
 
@@ -72,10 +72,10 @@ func main(){
 				image[x][y] = zSquaredPlusC(image[x][y],c)
 				image[x][y].size = getComplexSize(image[x][y])
 				image[x][y].count = count
-				if image[x][y].size > 2{break}
+				if image[x][y].size > 2.0 {break}
 			}
 
-			if image[x][y].size < 2{
+			if image[x][y].size <= 2.0{
 			//	fmt.Println(fmt.Sprintf("Array [%d][%d], Coords: (%f,%f)",x,y,a,b))
 				image[x][y].enab='#'
 			} else {
