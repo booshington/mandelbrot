@@ -8,18 +8,22 @@ package main
 import (
 	"fmt"
 	"math"
-//	"strings"
+	"image"
+	"image/color"
+	"image/png"
+	"os"
 )
 
 //type complex
 //contains a complex number and data about it as it applies to the mandelbrot set - 
 //	it's size, and the # of iterations it took to stabilize or fly off to infinity
 type complex struct {
-	real	float64
-	imag	float64
-	size	float64
-	count	int
-	enab	byte
+	real	float64	//real component
+	imag	float64	//number coorespondin to imaginary component
+	size	float64	//size of coordinate -- sqrt(real**2 + imag**2)
+	count	int	//number of iterations taken to pass 2
+	enab	byte	//is the pixel enabled (in the set)
+	color	int	//0-255
 }
 
 func printComplex(c complex){
@@ -51,14 +55,20 @@ func getComplexSize(c complex) float64 {
 
 func main(){
 	fmt.Println("Howdy")
+	printTextOutput := false
 
 	//edge size of square for mandelbrot image, and mandelbrot image
-	size := 200
-	var image [200][200] complex
+	//the array sizes, and square length must be size according to how the algo was written
+	size := 2000
+	var imageArr [2000][2000] complex
+	imgOut := image.NewNRGBA(image.Rect(0,0,2000,2000))
+
+	//step of 4 corresonds to a -2 to +2 range on the real and imaginary components
 	step := 4.0/float64(size)
 
-	//starting c = 1
+	//fun values of c
 	c := complex{real:-1.2,imag:0.1}
+	//c := complex{real:-0.95,imag:0.07}
 
 	//number of count iterations for each pixel
 	maxCount := 1000
@@ -66,25 +76,25 @@ func main(){
 	//for each space, calculate if sizeof(z**2+c) <= 2, 
 	for x,a := 0,-2.0;x<size;x++{
 		for y,b := 0,-2.0;y<size;y++{
-			image[x][y] = complex{real:a,imag:b}
+			imageArr[x][y] = complex{real:a,imag:b}
 
 			for count := 0;count < maxCount;count++{
-				image[x][y] = zSquaredPlusC(image[x][y],c)
-				image[x][y].size = getComplexSize(image[x][y])
-				image[x][y].count = count
-				if image[x][y].size > 2.0 {break}
+				imageArr[x][y] = zSquaredPlusC(imageArr[x][y],c)
+				imageArr[x][y].size = getComplexSize(imageArr[x][y])
+				imageArr[x][y].count = count
+				if imageArr[x][y].size > 2.0 {break}
 			}
 
-			if image[x][y].size <= 2.0{
-			//	fmt.Println(fmt.Sprintf("Array [%d][%d], Coords: (%f,%f)",x,y,a,b))
-				image[x][y].enab='#'
+			//"enab" can be removed as it's for the initial text-mapping but doesn't work with higher resolutions
+			//can also make this logical bit more granular for different colors and artsiness
+			//	i.e. size of 2 but different count values, different values under 2, etc.
+			if imageArr[x][y].size <= 2.0{
+				imageArr[x][y].enab='#'
+				imgOut.Set(x,y, color.RGBA{0,0,0,255})
 			} else {
-				image[x][y].enab=' '
+				imageArr[x][y].enab=' '
+				imgOut.Set(x,y, color.RGBA{255,255,255,255})
 			}
-			
-
-//			fmt.Println(fmt.Sprintf("At end of inner y loop (%d,%d), image: %f,%f | %f @ %d",x,y,image[x][y].real,image[x][y].imag,image[x][y].size,image[x][y].count))
-
 			//increment real component
 			b += step
 		}
@@ -92,18 +102,20 @@ func main(){
 		a += step
 	}
 
-	fmt.Println("calculated image, printing image...")
-	var line string
-	for i:=0;i<size;i++{
-		line = ""
-		for j := 0;j<size;j++ {
-			line = line+string(image[i][j].enab)
+	if printTextOutput {
+		fmt.Println("calculated image, printing image...")
+		var line string
+		for i:=0;i<size;i++{
+			line = ""
+			for j := 0;j<size;j++ {
+				line = line+string(imageArr[i][j].enab)
+			}
+			fmt.Println(line)
 		}
-		fmt.Println(line)
 	}
 
-
-	
-
-
+	fmt.Println("generated png image, saving...")
+	f, _ := os.OpenFile("out.png", os.O_WRONLY|os.O_CREATE, 0600)
+	defer f.Close()
+	png.Encode(f,imgOut)
 }
