@@ -8,7 +8,6 @@ package main
 import (
 	"fmt"
 	"math"
-//	"strings"
 	"image"
 	"image/color"
 	"image/png"
@@ -56,16 +55,20 @@ func getComplexSize(c complex) float64 {
 
 func main(){
 	fmt.Println("Howdy")
+	printTextOutput := false
 
 	//edge size of square for mandelbrot image, and mandelbrot image
-	size := 200
-	var imageArr [200][200] complex
-	imgOut := image.NewNRGBA(image.Rect(0,0,200,200))
+	//the array sizes, and square length must be size according to how the algo was written
+	size := 2000
+	var imageArr [2000][2000] complex
+	imgOut := image.NewNRGBA(image.Rect(0,0,2000,2000))
 
+	//step of 4 corresonds to a -2 to +2 range on the real and imaginary components
 	step := 4.0/float64(size)
 
-	//starting c = 1
+	//fun values of c
 	c := complex{real:-1.2,imag:0.1}
+	//c := complex{real:-0.95,imag:0.07}
 
 	//number of count iterations for each pixel
 	maxCount := 1000
@@ -82,18 +85,16 @@ func main(){
 				if imageArr[x][y].size > 2.0 {break}
 			}
 
+			//"enab" can be removed as it's for the initial text-mapping but doesn't work with higher resolutions
+			//can also make this logical bit more granular for different colors and artsiness
+			//	i.e. size of 2 but different count values, different values under 2, etc.
 			if imageArr[x][y].size <= 2.0{
-			//	fmt.Println(fmt.Sprintf("Array [%d][%d], Coords: (%f,%f)",x,y,a,b))
 				imageArr[x][y].enab='#'
 				imgOut.Set(x,y, color.RGBA{0,0,0,255})
 			} else {
 				imageArr[x][y].enab=' '
 				imgOut.Set(x,y, color.RGBA{255,255,255,255})
 			}
-			
-
-//			fmt.Println(fmt.Sprintf("At end of inner y loop (%d,%d), image: %f,%f | %f @ %d",x,y,image[x][y].real,image[x][y].imag,image[x][y].size,image[x][y].count))
-
 			//increment real component
 			b += step
 		}
@@ -101,23 +102,20 @@ func main(){
 		a += step
 	}
 
-	fmt.Println("calculated image, printing image...")
-	var line string
-	for i:=0;i<size;i++{
-		line = ""
-		for j := 0;j<size;j++ {
-			line = line+string(imageArr[i][j].enab)
+	if printTextOutput {
+		fmt.Println("calculated image, printing image...")
+		var line string
+		for i:=0;i<size;i++{
+			line = ""
+			for j := 0;j<size;j++ {
+				line = line+string(imageArr[i][j].enab)
+			}
+			fmt.Println(line)
 		}
-		fmt.Println(line)
 	}
-
 
 	fmt.Println("generated png image, saving...")
 	f, _ := os.OpenFile("out.png", os.O_WRONLY|os.O_CREATE, 0600)
 	defer f.Close()
 	png.Encode(f,imgOut)
-
-	
-
-
 }
