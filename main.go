@@ -9,17 +9,22 @@ import (
 	"fmt"
 	"math"
 //	"strings"
+	"image"
+	"image/color"
+	"image/png"
+	"os"
 )
 
 //type complex
 //contains a complex number and data about it as it applies to the mandelbrot set - 
 //	it's size, and the # of iterations it took to stabilize or fly off to infinity
 type complex struct {
-	real	float64
-	imag	float64
-	size	float64
-	count	int
-	enab	byte
+	real	float64	//real component
+	imag	float64	//number coorespondin to imaginary component
+	size	float64	//size of coordinate -- sqrt(real**2 + imag**2)
+	count	int	//number of iterations taken to pass 2
+	enab	byte	//is the pixel enabled (in the set)
+	color	int	//0-255
 }
 
 func printComplex(c complex){
@@ -54,7 +59,9 @@ func main(){
 
 	//edge size of square for mandelbrot image, and mandelbrot image
 	size := 200
-	var image [200][200] complex
+	var imageArr [200][200] complex
+	imgOut := image.NewNRGBA(image.Rect(0,0,200,200))
+
 	step := 4.0/float64(size)
 
 	//starting c = 1
@@ -66,20 +73,22 @@ func main(){
 	//for each space, calculate if sizeof(z**2+c) <= 2, 
 	for x,a := 0,-2.0;x<size;x++{
 		for y,b := 0,-2.0;y<size;y++{
-			image[x][y] = complex{real:a,imag:b}
+			imageArr[x][y] = complex{real:a,imag:b}
 
 			for count := 0;count < maxCount;count++{
-				image[x][y] = zSquaredPlusC(image[x][y],c)
-				image[x][y].size = getComplexSize(image[x][y])
-				image[x][y].count = count
-				if image[x][y].size > 2.0 {break}
+				imageArr[x][y] = zSquaredPlusC(imageArr[x][y],c)
+				imageArr[x][y].size = getComplexSize(imageArr[x][y])
+				imageArr[x][y].count = count
+				if imageArr[x][y].size > 2.0 {break}
 			}
 
-			if image[x][y].size <= 2.0{
+			if imageArr[x][y].size <= 2.0{
 			//	fmt.Println(fmt.Sprintf("Array [%d][%d], Coords: (%f,%f)",x,y,a,b))
-				image[x][y].enab='#'
+				imageArr[x][y].enab='#'
+				imgOut.Set(x,y, color.RGBA{0,0,0,255})
 			} else {
-				image[x][y].enab=' '
+				imageArr[x][y].enab=' '
+				imgOut.Set(x,y, color.RGBA{255,255,255,255})
 			}
 			
 
@@ -97,11 +106,16 @@ func main(){
 	for i:=0;i<size;i++{
 		line = ""
 		for j := 0;j<size;j++ {
-			line = line+string(image[i][j].enab)
+			line = line+string(imageArr[i][j].enab)
 		}
 		fmt.Println(line)
 	}
 
+
+	fmt.Println("generated png image, saving...")
+	f, _ := os.OpenFile("out.png", os.O_WRONLY|os.O_CREATE, 0600)
+	defer f.Close()
+	png.Encode(f,imgOut)
 
 	
 
